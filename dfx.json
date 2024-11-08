@@ -1,0 +1,26 @@
+{
+  "canisters": {
+    "agg-v1-backend": {
+      "main": "src/agg-v1-backend/main.mo",
+      "type": "motoko"
+    },
+    "agg-v1-frontend": {
+      "dependencies": [
+        "agg-v1-backend"
+      ],
+      "source": [
+        "src/agg-v1-frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "agg-v1-frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
