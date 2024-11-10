@@ -1,59 +1,140 @@
-# `agg-v1`
+# Aggregator
 
-Welcome to your new `agg-v1` project and to the Internet Computer development community. By default, creating a new project adds this README and some template files to your project directory. You can edit these template files to customize your project and to include your own code to speed up the development cycle.
+## The Problem
 
-To get started, you might want to explore the project directory structure and the default configuration file. Working with this project in your development environment will not affect any production deployment or identity tokens.
+In the decentralized finance (DeFi) ecosystem on the Internet Computer, users often face challenges when trying to get the best rates for their token swaps:
+- Multiple DEXs offer different rates for the same token pairs
+- Manually checking each DEX is time-consuming and inefficient
+- Price differences between DEXs create opportunities for better trades that users might miss
+- Complex approval and swap processes across different DEX protocols
 
-To learn more before you start working with `agg-v1`, see the following documentation available online:
+## Our Solution
 
-- [Quick Start](https://internetcomputer.org/docs/current/developer-docs/setup/deploy-locally)
-- [SDK Developer Tools](https://internetcomputer.org/docs/current/developer-docs/setup/install)
-- [Motoko Programming Language Guide](https://internetcomputer.org/docs/current/motoko/main/motoko)
-- [Motoko Language Quick Reference](https://internetcomputer.org/docs/current/motoko/main/language-manual)
+The Aggregator introduces a unified solution that:
+1. Acts as a single entry point for trading across multiple DEXs
+2. Automatically finds and executes trades at the best available rates
+3. Simplifies the trading process by handling all DEX interactions
+4. Reduces costs by choosing the most efficient trading path
 
-If you want to start working on your project right away, you might want to try the following commands:
+### Current Implementation
+
+The current version leverages the Internet Computer's ecosystem features in a minimal but effective way:
+- Integration with native IC DEXs (KongSwap, ICPSwap)
+- Direct canister-to-canister communication for efficient price discovery
+- Atomic execution of trades within the IC ecosystem
+- Native token support for ICP ecosystem tokens
+
+While the current implementation focuses on basic integration with IC ecosystem DEXs, it serves as a foundation for more advanced features to come.
+
+### Future with ChainFusion
+
+The full potential of the Aggregator will be unlocked with ChainFusion implementation, enabling:
+- Cross-chain trading capabilities
+- Integration with DEXs from multiple blockchain ecosystems
+- Advanced routing algorithms for optimal trade paths
+- Enhanced liquidity aggregation across chains
+- Unified trading experience regardless of underlying blockchain
+
+## Overview
+
+The aggregator canister acts as a middleware that:
+1. Queries multiple DEXs for token swap quotes
+2. Compares rates to find the best deal
+3. Executes trades through the chosen DEX
+4. Handles all necessary token approvals and transfers
+
+Currently integrated with KongSwap and ICPSwap, the aggregator compares rates and executes trades through the most advantageous path.
+
+## Supported DEXs
+
+Currently integrated with:
+- KongSwap
+- ICPSwap
+
+## Canister Methods
+
+### Getting Quotes
+
+To fetch quotes from all supported DEXs:
 
 ```bash
-cd agg-v1/
-dfx help
-dfx canister --help
+dfx canister call agg-v1-backend getQuotes '(
+    "ICP",  # Token to sell
+    "ckBTC", # Token to buy
+    1000000000, # Amount in e8s
+    0.01 # Slippage tolerance
+)'
 ```
 
-## Running the project locally
+### Finding Best Quote
 
-If you want to test your project locally, you can use the following commands:
+To get the best available quote across all DEXs:
 
 ```bash
-# Starts the replica, running in the background
-dfx start --background
+dfx canister call agg-v1-backend getBestQuote '(
+    "ICP",
+    "ckBTC",
+    1000000000,
+    0.01
+)'
+```
 
-# Deploys your canisters to the replica and generates your candid interface
+## Frontend Application
+
+The frontend application provides a user-friendly interface for cross-chain swaps (Currnect Web-app only for show-case purporses) featuring:
+
+- Token selection for both source and destination
+- Real-time price quotes from multiple DEXs
+- Best rate highlighting
+- Slippage tolerance settings
+- Wallet integration for seamless transactions
+
+## Development
+
+### Local Setup
+
+1. Start the local replica:
+```bash
+dfx start --background --clear
+```
+
+2. Deploy the canisters:
+```bash
 dfx deploy
 ```
 
-Once the job completes, your application will be available at `http://localhost:4943?canisterId={asset_canister_id}`.
-
-If you have made changes to your backend canister, you can generate a new candid interface with
-
+3. Start the frontend development server:
 ```bash
-npm run generate
+cd src/agg-v1-frontend && npm run dev
 ```
 
-at any time. This is recommended before starting the frontend development server, and will be run automatically any time you run `dfx deploy`.
+The application will be available at `http://localhost:5173/`
 
-If you are making frontend changes, you can start a development server with
+## Dfx sdk OR Intercanister call
+
+### Step 1. Set Approve to DCA canister
+
+This call make future transfer from your wallet possible without any additional actions
+
 
 ```bash
-npm start
+dfx canister call ryjl3-tyaaa-aaaaa-aaaba-cai  icrc2_approve '(record { amount = 40_000; spender = record{owner = principal "4fd3k-eqaaa-aaaao-qjvuq-cai";} })' --ic
 ```
 
-Which will start a server at `http://localhost:8080`, proxying API requests to the replica at port 4943.
+CLI result
+```
+(variant { Ok = 12_141_598 : nat })
+```
 
-### Note on frontend environment variables
+### Step 2. Executing Swaps
 
-If you are hosting frontend code somewhere without using DFX, you may need to make one of the following adjustments to ensure your project does not fetch the root key in production:
+To execute a swap using the best available rate:
 
-- set`DFX_NETWORK` to `ic` if you are using Webpack
-- use your own preferred method to replace `process.env.DFX_NETWORK` in the autogenerated declarations
-  - Setting `canisters -> {asset_canister_id} -> declarations -> env_override to a string` in `dfx.json` will replace `process.env.DFX_NETWORK` with the string in the autogenerated declarations
-- Write your own `createActor` constructor
+```bash
+dfx canister call agg-v1-backend executeBestSwap '(
+    "ICP",
+    "ckBTC",
+    1000000000,
+    principal "your-principal-id",
+    0.01
+)'

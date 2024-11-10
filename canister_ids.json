@@ -7,5 +7,8 @@
   },
   "icsp_agg": {
     "ic": "6kyc3-3iaaa-aaaao-qjvya-cai"
+  },
+  "icsp_agg_index_canister": {
+    "ic": "6nzep-wqaaa-aaaao-qjvyq-cai"
   }
 }
