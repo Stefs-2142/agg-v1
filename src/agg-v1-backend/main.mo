@@ -256,7 +256,8 @@ actor class DexAggregator() = this {
                     case ("ICPSwap") {
                         let result = await _performMultiStagePurchase(position);
                         switch (result) {
-                            case (#ok(amount)) { #ok(amount) };
+                            case (#ok(amount)) { 
+                                #ok("Swap executed successfully with ICPSwap" # amount) };
                             case (#err(e)) { #err(#Other(e)) };
                         };
                     };
