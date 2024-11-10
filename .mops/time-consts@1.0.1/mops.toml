@@ -1,0 +1,6 @@
+[package]
+name = "time-consts"
+version = "1.0.1"
+description = "Time constants for Motoko"
+repository = "https://github.com/ZenVoich/time-consts"
+keywords = ["time", "date", "constants", "const", "duration"]

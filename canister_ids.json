@@ -1,0 +1,11 @@
+{
+  "agg-v1-backend": {
+    "ic": "4fd3k-eqaaa-aaaao-qjvuq-cai"
+  },
+  "agg-v1-frontend": {
+    "ic": "4lbwc-7aaaa-aaaao-qjvvq-cai"
+  },
+  "icsp_agg": {
+    "ic": "6kyc3-3iaaa-aaaao-qjvya-cai"
+  }
+}
