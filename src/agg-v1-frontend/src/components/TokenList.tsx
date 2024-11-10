@@ -1,6 +1,5 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { PriceData } from '../services/prices';
 
 interface Token {
   symbol: string;
@@ -12,7 +11,7 @@ interface TokenListProps {
   selectedToken: Token;
   onSelect: (token: Token) => void;
   onClose: () => void;
-  prices?: PriceData | null;
+  prices?: Record<string, number>;
 }
 
 export function TokenList({ tokens, selectedToken, onSelect, onClose, prices }: TokenListProps) {
@@ -20,8 +19,7 @@ export function TokenList({ tokens, selectedToken, onSelect, onClose, prices }: 
     <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 p-2 z-50">
       <div className="space-y-1">
         {tokens.map((token) => {
-          const price = prices?.[token.symbol]?.usd;
-          const priceChange = prices?.[token.symbol]?.usd_24h_change;
+          const price = prices?.[token.symbol];
           
           return (
             <button
@@ -44,13 +42,6 @@ export function TokenList({ tokens, selectedToken, onSelect, onClose, prices }: 
                     </span>
                   )}
                 </div>
-                {priceChange && (
-                  <span className={`text-xs ${
-                    priceChange >= 0 ? 'text-green-500' : 'text-red-500'
-                  }`}>
-                    {priceChange >= 0 ? '↑' : '↓'} {Math.abs(priceChange).toFixed(2)}%
-                  </span>
-                )}
               </div>
               {selectedToken.symbol === token.symbol && (
                 <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 ml-auto" />

@@ -7,6 +7,7 @@ import { ConnectWallet } from './components/ConnectWallet';
 import { Timer } from './components/Timer';
 import { ThemeToggle } from './components/ThemeToggle';
 import { useWallet } from './contexts/WalletContext';
+import { useTokenPrices } from './hooks/useTokenPrices';
 
 const TOKENS = {
   ICP: {
@@ -44,7 +45,21 @@ function App() {
   const [toToken, setToToken] = useState(TOKENS.ckBTC);
   const [isRotating, setIsRotating] = useState(false);
   const [isChainFusion, setIsChainFusion] = useState(false);
-  const { isConnected, principal } = useWallet();
+  const { isConnected } = useWallet();
+  const { prices, loading } = useTokenPrices();
+
+  // Calculate exchange rate and update toAmount when dependencies change
+  useEffect(() => {
+    if (fromAmount && prices && prices[fromToken.symbol] && prices[toToken.symbol]) {
+      const fromPrice = prices[fromToken.symbol];
+      const toPrice = prices[toToken.symbol];
+      const rate = toPrice / fromPrice;
+      const calculatedAmount = (parseFloat(fromAmount) * rate).toFixed(6);
+      setToAmount(calculatedAmount);
+    } else {
+      setToAmount('');
+    }
+  }, [fromAmount, fromToken.symbol, toToken.symbol, prices]);
 
   const handleSwap = () => {
     if (isRotating) return;
@@ -61,6 +76,16 @@ function App() {
     setTimeout(() => setIsRotating(false), 300);
   };
 
+  // Calculate the current exchange rate
+  const getExchangeRate = () => {
+    if (prices && prices[fromToken.symbol] && prices[toToken.symbol]) {
+      return prices[toToken.symbol] / prices[fromToken.symbol];
+    }
+    return null;
+  };
+
+  const rate = getExchangeRate();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 transition-colors">
       <nav className="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl fixed top-0 w-full z-50">
@@ -70,7 +95,7 @@ function App() {
               <Logo />
               <span className="ml-2 text-xl font-semibold dark:text-white">ICSpore</span>
               <span className="ml-2 text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-                Swap with best price acros a Web3
+                Swap with best rates in IC ecosystem
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -136,6 +161,8 @@ function App() {
                 selectedToken={fromToken}
                 availableTokens={ALL_TOKENS}
                 otherToken={toToken}
+                prices={prices}
+                rate={rate || undefined}
               />
               <div className="flex justify-center -my-2 relative z-10">
                 <button 
@@ -159,6 +186,8 @@ function App() {
                 selectedToken={toToken}
                 availableTokens={ALL_TOKENS}
                 otherToken={fromToken}
+                prices={prices}
+                isOutput={true}
               />
             </div>
 
@@ -168,21 +197,21 @@ function App() {
                   <RouteCard
                     protocol="Uniswap"
                     logo="https://cryptologos.cc/logos/uniswap-uni-logo.png"
-                    rate={`1 ${fromToken.symbol} = 0.000042 ${toToken.symbol}`}
+                    rate={`1 ${fromToken.symbol} = ${rate?.toFixed(6) || '0.000000'} ${toToken.symbol}`}
                     isOptimal={true}
                     chain="EVM"
                   />
                   <RouteCard
                     protocol="Jupiter"
                     logo="https://jup.ag/favicon-32x32.png"
-                    rate={`1 ${fromToken.symbol} = 0.000041 ${toToken.symbol}`}
+                    rate={`1 ${fromToken.symbol} = ${(rate ? rate * 0.98 : 0).toFixed(6)} ${toToken.symbol}`}
                     isOptimal={false}
                     chain="Solana"
                   />
                   <RouteCard
                     protocol="Osmosis"
                     logo="https://assets.coingecko.com/coins/images/16724/small/osmo.png"
-                    rate={`1 ${fromToken.symbol} = 0.000040 ${toToken.symbol}`}
+                    rate={`1 ${fromToken.symbol} = ${(rate ? rate * 0.97 : 0).toFixed(6)} ${toToken.symbol}`}
                     isOptimal={false}
                     chain="Cosmos"
                   />
@@ -192,13 +221,13 @@ function App() {
                   <RouteCard
                     protocol="KongSwap"
                     logo="https://avatars.githubusercontent.com/u/180925691?s=200&v=4"
-                    rate={`1 ${fromToken.symbol} = 0.000041 ${toToken.symbol}`}
+                    rate={`1 ${fromToken.symbol} = ${rate?.toFixed(6) || '0.000000'} ${toToken.symbol}`}
                     isOptimal={true}
                   />
                   <RouteCard
                     protocol="ICLighthouse"
                     logo="https://avatars.githubusercontent.com/u/92904844?v=4"
-                    rate={`1 ${fromToken.symbol} = 0.000040 ${toToken.symbol}`}
+                    rate={`1 ${fromToken.symbol} = ${(rate ? rate * 0.99 : 0).toFixed(6)} ${toToken.symbol}`}
                     isOptimal={false}
                   />
                 </>

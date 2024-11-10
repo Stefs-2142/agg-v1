@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { TokenList } from './TokenList';
-import { PriceData } from '../services/prices';
 
 interface Token {
   symbol: string;
@@ -16,7 +15,9 @@ interface TokenInputProps {
   selectedToken: Token;
   availableTokens: Token[];
   otherToken?: Token;
-  prices?: PriceData | null;
+  prices?: Record<string, number>;
+  isOutput?: boolean;
+  rate?: number;
 }
 
 export function TokenInput({ 
@@ -27,7 +28,9 @@ export function TokenInput({
   selectedToken,
   availableTokens,
   otherToken,
-  prices
+  prices,
+  isOutput,
+  rate
 }: TokenInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -37,7 +40,7 @@ export function TokenInput({
   );
 
   const usdValue = prices && prices[selectedToken.symbol] && value
-    ? (parseFloat(value) * prices[selectedToken.symbol].usd).toFixed(2)
+    ? (parseFloat(value) * prices[selectedToken.symbol]).toFixed(2)
     : null;
 
   useEffect(() => {
@@ -52,21 +55,30 @@ export function TokenInput({
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(',', '.');
+    const inputValue = e.target.value;
     
-    if (value === '') {
+    // Allow empty input
+    if (inputValue === '') {
       onChange('');
       return;
     }
 
-    if (value === '.' || value === '0.') {
-      onChange(value);
+    // Allow single decimal point
+    if (inputValue === '.' || inputValue === '0.') {
+      onChange(inputValue);
       return;
     }
 
-    const regex = /^(?!00)\d*\.?\d*$/;
-    if (regex.test(value)) {
-      const normalizedValue = value.replace(/^0(\d)/, '$1');
+    // Validate decimal number format
+    const regex = /^\d*\.?\d*$/;
+    if (regex.test(inputValue)) {
+      // Remove leading zeros but keep decimal part
+      const parts = inputValue.split('.');
+      const integerPart = parts[0].replace(/^0+(?=\d)/, '');
+      const normalizedValue = parts.length > 1 
+        ? `${integerPart || '0'}.${parts[1]}`
+        : integerPart || '0';
+      
       onChange(normalizedValue);
     }
   };
@@ -75,7 +87,11 @@ export function TokenInput({
     <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
       <div className="flex justify-between mb-2">
         <label className="text-sm text-gray-500 dark:text-gray-400">{label}</label>
-        <span className="text-sm text-gray-500 dark:text-gray-400">Balance: 0.00</span>
+        {rate && !isOutput && (
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            1 {selectedToken.symbol} = {rate.toFixed(6)} {otherToken?.symbol}
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <div className="flex-1">
@@ -87,6 +103,7 @@ export function TokenInput({
             className="w-full text-2xl bg-transparent outline-none dark:text-white"
             placeholder="0.0"
             autoComplete="off"
+            readOnly={isOutput}
           />
           {usdValue && (
             <div className="text-sm text-gray-500 dark:text-gray-400">
