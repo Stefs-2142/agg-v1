@@ -58,11 +58,11 @@ Currently integrated with:
 To fetch quotes from all supported DEXs:
 
 ```bash
-dfx canister call agg-v1-backend getQuotes '(
-    "ICP",  # Token to sell
-    "ckBTC", # Token to buy
-    1000000000, # Amount in e8s
-    0.01 # Slippage tolerance
+dfx canister call agg-v1-backend getQuotes --ic '(
+    "ICP",
+    "ckBTC",
+    1000000000,
+    0.01
 )'
 ```
 
@@ -71,7 +71,7 @@ dfx canister call agg-v1-backend getQuotes '(
 To get the best available quote across all DEXs:
 
 ```bash
-dfx canister call agg-v1-backend getBestQuote '(
+dfx canister call agg-v1-backend getBestQuote --ic '(
     "ICP",
     "ckBTC",
     1000000000,
