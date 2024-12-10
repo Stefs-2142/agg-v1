@@ -7,4 +7,11 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  define: {
+    // Определяем process.env для использования в коде
+    'process.env': {
+      'DFX_NETWORK': 'ic',
+      'CANISTER_ID_AGG_V1_BACKEND': '4fd3k-eqaaa-aaaao-qjvuq-cai'
+    }
+  }
 });

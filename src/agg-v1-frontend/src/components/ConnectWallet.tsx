@@ -1,46 +1,90 @@
-import React, { useState } from 'react';
-import { Wallet, LogOut, ExternalLink } from 'lucide-react';
-import { WalletModal } from './WalletModal';
-import { useWallet } from '../contexts/WalletContext';
+import React, { useState, useRef, useEffect } from 'react';
+import { Wallet, Copy, LogOut } from 'lucide-react';
+import { useIdentityKit } from '@nfid/identitykit/react';
 
 export function ConnectWallet() {
-  const [isOpen, setIsOpen] = useState(false);
-  const { isConnected, address, disconnect } = useWallet();
+    const { user, connect, disconnect } = useIdentityKit();
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-  if (isConnected && address) {
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleCopyAddress = async () => {
+        if (user) {
+            await navigator.clipboard.writeText(user.principal.toString());
+            // Optional: Add a toast notification here
+        }
+    };
+
+    const handleConnect = () => {
+        if (!user) {
+            connect();
+        } else {
+            setIsOpen(!isOpen);
+        }
+    };
+
+    const formatAddress = (address: string) => {
+        return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    };
+
     return (
-      <div className="flex items-center gap-2">
-        <a
-          href="#"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-        >
-          <span className="font-medium">
-            {address.slice(0, 6)}...{address.slice(-4)}
-          </span>
-          <ExternalLink className="w-4 h-4" />
-        </a>
-        <button
-          onClick={disconnect}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
-          title="Disconnect wallet"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
-      </div>
+        <div className="relative" ref={dropdownRef}>
+            <button
+                onClick={handleConnect}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
+                style={{
+                    backgroundColor: user ? 'rgb(239 246 255)' : 'rgb(37 99 235)',
+                    color: user ? 'rgb(37 99 235)' : 'white',
+                }}
+            >
+                {!user ? (
+                    <>
+                        <Wallet className="w-5 h-5" />
+                        Connect Wallet
+                    </>
+                ) : (
+                    <span className="font-medium">
+                        {formatAddress(user.principal.toString())}
+                    </span>
+                )}
+            </button>
+
+            {isOpen && user && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 py-2">
+                    <div className="px-4 py-2">
+                        <div className="text-sm text-gray-500">Wallet address</div>
+                        <div className="flex items-center justify-between mt-1">
+                            <span className="font-medium">
+                                {formatAddress(user.principal.toString())}
+                            </span>
+                            <button
+                                onClick={handleCopyAddress}
+                                className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                                <Copy className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="border-t border-gray-100 mt-2" />
+                    <button
+                        onClick={disconnect}
+                        className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-100 transition-colors"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        <span>Disconnect</span>
+                    </button>
+                </div>
+            )}
+        </div>
     );
-  }
-
-  return (
-    <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-      >
-        <Wallet className="w-5 h-5" />
-        Connect Wallet
-      </button>
-
-      <WalletModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
-    </>
-  );
 }
